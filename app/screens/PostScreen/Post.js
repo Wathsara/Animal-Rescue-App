@@ -5,7 +5,8 @@ import {
     View,
     TouchableOpacity,
     Image,
-    Linking
+    Linking,
+    ActivityIndicator
 } from 'react-native';
 import ModalHeader from "../../components/ModalHeaderNavigationBar/modalHeaderNavigationBar";
 import styles from "./style";
@@ -15,8 +16,8 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import * as Animatable from 'react-native-animatable';
 import TouchableScale from "react-native-touchable-scale";
 import { f, auth, storage, database } from "../../config/firebaseConfig";
-import { COLOR_PRIMARY } from '../../config/styles';
-
+import { COLOR_PRIMARY, COLOR_GRAY } from '../../config/styles';
+import Video from 'react-native-video';
 export default class Post extends Component {
 
     constructor(props) {
@@ -32,6 +33,7 @@ export default class Post extends Component {
             id: null,
             authorId: f.auth().currentUser.uid
         }
+        this.video = Video;
         this.mapRef = null;
     }
     componentDidMount = async () => {
@@ -55,10 +57,10 @@ export default class Post extends Component {
                             that.setState({
                                 liked: true
                             })
-                            count +=1;
+                            count += 1;
                         }
                     }
-                    if(count==0){
+                    if (count == 0) {
                         that.setState({
                             liked: false
                         })
@@ -80,7 +82,8 @@ export default class Post extends Component {
                         loaded: true,
                         userId: data.userId,
                         id: data.id,
-                        posted: data.posted
+                        posted: data.posted,
+                        type: data.type
 
                     })
                     //that.mapView.animateToRegion(region, 1000);
@@ -177,10 +180,10 @@ export default class Post extends Component {
                 userId: userId,
                 status: 1
             }
-            database.ref("posts/"+postID + '/likes/' + userId).set(likeObj);
+            database.ref("posts/" + postID + '/likes/' + userId).set(likeObj);
         } else {
             var userId = f.auth().currentUser.uid;
-            database.ref("posts/"+postID + '/likes/' + userId).remove();
+            database.ref("posts/" + postID + '/likes/' + userId).remove();
         }
     }
     render() {
@@ -190,15 +193,48 @@ export default class Post extends Component {
                 <HeaderImageScrollView
                     maxHeight={200}
                     minHeight={50}
-                    headerImage={{ uri: this.state.image }}
+                    // headerImage={{ uri: this.state.image }}
                     fadeOutForeground
                     style={{ marginBottom: 10 }}
-                    // renderHeader={() => <Image source={require("../../images/dog.jpg")} style={styles.image} />}
-                    // renderForeground={() => (
-                    //     <View style={styles.titleContainer}>
-                    //         <Text style={styles.imageTitle}>Dog</Text>
-                    //     </View>
-                    // )}
+                    renderHeader={() => {
+                        if (this.state.type == 0) {
+                            return (
+                                <Image source={{ uri: this.state.image }} style={styles.image} />
+                            )
+                        } else {
+                            return (
+                                // <View style={{alignItems:'center', justifyContent:'center', width:'100%', backgroundColor:COLOR_GRAY}}>
+                                    <Video source={{ uri: this.state.image }}
+                                        volume={10}
+                                        repeat={true}
+                                        fullscreen={true}
+                                        width={700}
+                                        ref={(ref) => {
+                                            this.player = ref
+                                        }}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            bottom: 0,
+                                            right: 0,
+                                            width: '100%',
+                                            alignSelf: 'center'
+                                        }} />
+                                // </View>
+
+
+                            )
+
+                        }
+
+                    }
+                    }
+                    renderForeground={() => (
+                        <View style={styles.titleContainer}>
+                            {/* <ActivityIndicator/> */}
+                        </View>
+                    )}
 
                     renderFixedForeground={() => (
                         <Animatable.View
@@ -224,6 +260,7 @@ export default class Post extends Component {
                         onDisplay={() => this.navTitleView.fadeOut(200)}
                     >
                     </TriggeringView>
+
                     <View style={styles.topView}>
                         <View style={styles.informationArea}>
                             <Text style={styles.name}>{this.state.animal}</Text>
@@ -249,7 +286,7 @@ export default class Post extends Component {
                             zoomControlEnabled={true}
                             showsMyLocationButton={true}
                             scrollEnabled={false}
-                            // ref={ref => { this.mapView = ref }}
+                        // ref={ref => { this.mapView = ref }}
                         >
 
                             {this.state.latitude != null && this.state.latitude != null ? (
@@ -312,11 +349,11 @@ export default class Post extends Component {
                         >
 
                             {this.state.liked == false ? (
-                                <TouchableOpacity style={[styles.row, { alignItems: 'flex-end' }]} onPress={()=>this.setLike(this.state.id)} >
+                                <TouchableOpacity style={[styles.row, { alignItems: 'flex-end' }]} onPress={() => this.setLike(this.state.id)} >
                                     <Icon name="thumbs-up" size={24} />
                                 </TouchableOpacity>
                             ) : (
-                                    <TouchableOpacity style={[styles.row, { alignItems: 'flex-end' }]} onPress={()=>this.setLike(this.state.id)}>
+                                    <TouchableOpacity style={[styles.row, { alignItems: 'flex-end' }]} onPress={() => this.setLike(this.state.id)}>
                                         <Icon name="thumbs-up" size={24} color={COLOR_PRIMARY} />
                                     </TouchableOpacity>
                                 )}

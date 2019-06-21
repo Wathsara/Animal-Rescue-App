@@ -8,7 +8,7 @@ import { ButtonGroup } from "react-native-elements";
 import MapView, { PROVIDER_GOOGLE, Marker } from "react-native-maps";
 import { COLOR_PRIMARY, COLOR_BLACK, COLOR_SECONDARY } from "../../config/styles";
 import styles from "./style";
-
+import Video from 'react-native-video';
 import DropdownAlert from 'react-native-dropdownalert';
 import ActionSheet from 'react-native-actionsheet'
 import { f, auth, storage, database } from "../../config/firebaseConfig";
@@ -47,9 +47,9 @@ class NewPost extends React.Component {
 
     }
     updateIndex(selectedIndex) {
-        this.setState({ 
-            selectedIndex:selectedIndex,
-            photoError: true 
+        this.setState({
+            selectedIndex: selectedIndex,
+            photoError: true
         })
 
     }
@@ -110,7 +110,7 @@ class NewPost extends React.Component {
             } else {
                 this.setState({
                     pickedImage: res.uri,
-                    pickedVideo:null,
+                    pickedVideo: null,
                     photoError: false
                 });
             }
@@ -127,7 +127,7 @@ class NewPost extends React.Component {
             } else {
                 this.setState({
                     pickedVideo: res.uri,
-                    pickedImage:null,
+                    pickedImage: null,
                     photoError: false
                 });
             }
@@ -180,54 +180,106 @@ class NewPost extends React.Component {
 
     uploadImage = async () => {
 
-        var uri = this.state.pickedImage
-        var that = this;
-        var postId = this.state.postId;
-        var re = /(?:\.([^.]+))?$/;
-        var ext = re.exec(uri)[1];
-        var longitude = this.state.longitude;
-        var latitude = this.state.latitude;
-        this.setState({
-            currentFileType: ext,
-            uploading: true
-        });
-        const blob = await new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-                resolve(xhr.response);
-            };
-            xhr.onerror = function (e) {
-                console.log(e);
-                reject(new TypeError('Network request failed'));
-            };
-            xhr.responseType = 'blob';
-            xhr.open('GET', uri, true);
-            xhr.send(null);
-        });
-        var filePath = postId + '.' + that.state.currentFileType;
-
-        var uploadTask = storage.ref('posts/images/' + this.state.selectedAnimal).child(filePath).put(blob);
-
-        uploadTask.on('state_changed', function (snapshot) {
-            let progress = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
-            that.setState({
-                progress: progress
+        if (this.state.selectedIndex == 0) {
+            var uri = this.state.pickedImage
+            var that = this;
+            var postId = this.state.postId;
+            var re = /(?:\.([^.]+))?$/;
+            var ext = re.exec(uri)[1];
+            var longitude = this.state.longitude;
+            var latitude = this.state.latitude;
+            this.setState({
+                currentFileType: ext,
+                uploading: true
             });
-        }, function (error) {
-            console.log(error);
-
-        }, function () {
-            that.setState({
-                progress: 100
+            const blob = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function () {
+                    resolve(xhr.response);
+                };
+                xhr.onerror = function (e) {
+                    console.log(e);
+                    reject(new TypeError('Network request failed'));
+                };
+                xhr.responseType = 'blob';
+                xhr.open('GET', uri, true);
+                xhr.send(null);
             });
-            // alert("done");
-            uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
-                that.setDatabse(downloadURL, latitude, longitude);
-                console.log(downloadURL);
+            var filePath = postId + '.' + that.state.currentFileType;
+
+            var uploadTask = storage.ref('posts/images/' + this.state.selectedAnimal).child(filePath).put(blob);
+
+            uploadTask.on('state_changed', function (snapshot) {
+                let progress = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
+                that.setState({
+                    progress: progress
+                });
             }, function (error) {
-                console.log(error)
+                console.log(error);
+
+            }, function () {
+                that.setState({
+                    progress: 100
+                });
+                // alert("done");
+                uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
+                    that.setDatabse(downloadURL, latitude, longitude);
+                    console.log(downloadURL);
+                }, function (error) {
+                    console.log(error)
+                })
             })
-        })
+        } else {
+            var uri = this.state.pickedVideo
+            var that = this;
+            var postId = this.state.postId;
+            var re = /(?:\.([^.]+))?$/;
+            var ext = re.exec(uri)[1];
+            var longitude = this.state.longitude;
+            var latitude = this.state.latitude;
+            this.setState({
+                currentFileType: ext,
+                uploading: true
+            });
+            const blob = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function () {
+                    resolve(xhr.response);
+                };
+                xhr.onerror = function (e) {
+                    console.log(e);
+                    reject(new TypeError('Network request failed'));
+                };
+                xhr.responseType = 'blob';
+                xhr.open('GET', uri, true);
+                xhr.send(null);
+            });
+            var filePath = postId + '.' + that.state.currentFileType;
+
+            var uploadTask = storage.ref('posts/videos/' + this.state.selectedAnimal).child(filePath).put(blob);
+
+            uploadTask.on('state_changed', function (snapshot) {
+                let progress = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
+                that.setState({
+                    progress: progress
+                });
+            }, function (error) {
+                console.log(error);
+
+            }, function () {
+                that.setState({
+                    progress: 100
+                });
+                // alert("done");
+                uploadTask.snapshot.ref.getDownloadURL().then(function (downloadURL) {
+                    that.setDatabse(downloadURL, latitude, longitude);
+                    console.log(downloadURL);
+                }, function (error) {
+                    console.log(error)
+                })
+            })
+        }
+
 
     }
 
@@ -246,6 +298,7 @@ class NewPost extends React.Component {
             status: 0,
             id: postId,
             posted: posted,
+            type: this.state.selectedIndex
         };
 
         const myPostOBJ = {
@@ -317,12 +370,19 @@ class NewPost extends React.Component {
                                             )
 
 
-                                        : (
+                                        :
+                                        this.state.selectedIndex == 0 ? (
                                             <TouchableOpacity style={styles.imageContainer} onPress={() => this.selectPhoto()}>
                                                 <Image source={{ uri: this.state.pickedImage }} style={{ width: '100%', height: '100%' }} />
                                             </TouchableOpacity>
+                                        ) : (
+                                                <TouchableOpacity style={styles.imageContainer} onPress={() => this.selectVideo()}>
+                                                    <Image source={{ uri: this.state.pickedVideo }} style={{ width: '100%', height: '100%' }} />
+                                                </TouchableOpacity>
+                                            )
 
-                                        )}
+
+                                    }
 
                                 </View>
                             </ProgressStep>
